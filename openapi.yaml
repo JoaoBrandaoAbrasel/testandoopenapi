@@ -1,0 +1,58 @@
+openapi: 3.0.3
+info:
+  title: API de Exemplo
+  description: Documentação de teste usando OpenAPI no GitHub Pages
+  version: 1.0.0
+
+servers:
+  - url: https://api.exemplo.com
+    description: Servidor de produção
+
+paths:
+  /usuarios:
+    get:
+      summary: Lista usuários
+      description: Retorna uma lista de usuários cadastrados.
+      responses:
+        '200':
+          description: Lista retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    nome:
+                      type: string
+                      example: João Vitor
+
+  /usuarios/{id}:
+    get:
+      summary: Busca um usuário por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID do usuário
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuário encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  nome:
+                    type: string
+                    example: João Vitor
+        '404':
+          description: Usuário não encontrado
