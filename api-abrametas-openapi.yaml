@@ -56,16 +56,42 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - messages
+                  - access_token
+                  - token_expira_em
+                  - expires_in
+                  - token_expira_em_time
+                  - token_tipo
+                  - token_type
                 properties:
+                  messages:
+                    type: string
+                    example: "sucesso"
                   access_token:
                     type: string
-                    description: Token JWT
+                    description: Token JWT gerado para autenticação.
+                    example: "eyJ0eXAiOiJKV1QiLCJhbGcYI"
+                  token_expira_em:
+                    type: string
+                    format: date-time
+                    description: Data e hora de expiração do token.
+                    example: "2026-04-13 11:37:36"
+                  expires_in:
+                    type: string
+                    format: date-time
+                    description: Data e hora de expiração do token.
+                    example: "2026-04-13 11:37:36"
+                  token_expira_em_time:
+                    type: integer
+                    description: Timestamp Unix da expiração do token.
+                    example: 1776091056
+                  token_tipo:
+                    type: string
+                    example: "Bearer"
                   token_type:
                     type: string
                     example: "Bearer"
-                  expires_in:
-                    type: integer
-                    description: Tempo de expiração em segundos
         '400':
           description: Credenciais inválidas ou campos faltando.
           content:
@@ -73,10 +99,23 @@ paths:
               schema:
                 type: object
                 properties:
+                  status:
+                    type: integer
                   error:
-                    type: boolean
+                    type: integer
                   messages:
                     type: object
+                    properties:
+                      error:
+                        type: boolean
+                      messages:
+                        type: string
+              example:
+                status: 400
+                error: 400
+                messages:
+                  error: true
+                  messages: "Usuario e/ou senha invalidos"
 
   /associados/relatorios:
     get:
@@ -137,8 +176,6 @@ paths:
                 items:
                   type: object
                   properties:
-                    uf_siga:
-                      type: string
                     unidade_nucleo:
                       type: string
                     cnpj:
@@ -148,6 +185,8 @@ paths:
                     uf:
                       type: string
                     categoria_associado:
+                      type: string
+                    uf_siga:
                       type: string
         '204':
           description: Nenhum registro encontrado.
@@ -278,16 +317,7 @@ paths:
                 items:
                   type: object
                   properties:
-                    uf_siga:
-                      type: string
                     unidade_nucleo:
-                      type: string
-                    cnpj:
-                      type: string
-                    dt_movimentacao:
-                      type: string
-                      format: date
-                    mes_ano:
                       type: string
                     movimentacao_tipo:
                       type: string
@@ -295,12 +325,21 @@ paths:
                         - Filiação
                         - Refiliação
                         - Desfiliação
+                    mes_ano:
+                      type: string
+                    cnpj:
+                      type: string
+                    dt_movimentacao:
+                      type: string
+                      format: date
                     motivo_desfiliacao:
                       type: string
                       nullable: true
                     motivo_filiacao:
                       type: string
                       nullable: true
+                    uf_siga:
+                      type: string
         '204':
           description: Nenhum registro encontrado.
         '401':
