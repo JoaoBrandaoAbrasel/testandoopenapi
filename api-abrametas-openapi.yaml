@@ -20,20 +20,35 @@ paths:
       tags: [Autenticação]
       summary: Obter token JWT
       description: |
-        Envie `username`, `password`, `client_id` e `client_secret` no corpo da requisição no formato `application/x-www-form-urlencoded`.
-        O token retornado deve ser usado no header `Authorization: Bearer <token>` em todas as requisições seguintes.
+        Envie `username`, `password`, `client_id` e `client_secret` no corpo da requisição
+        no formato `application/x-www-form-urlencoded`.
+
+        O token retornado deve ser usado no header `Authorization: Bearer <token>`
+        nas requisições seguintes aos endpoints protegidos.
       requestBody:
         required: true
         content:
           application/x-www-form-urlencoded:
             schema:
               type: object
-              required: [username, password, client_id, client_secret]
+              required:
+                - username
+                - password
+                - client_id
+                - client_secret
               properties:
-                username: { type: string, example: "usuario@abrasel.com.br" }
-                password: { type: string, example: "sua_senha" }
-                client_id: { type: string, example: "seu_client_id" }
-                client_secret: { type: string, example: "seu_client_secret" }
+                username:
+                  type: string
+                  example: "usuario@abrasel.com.br"
+                password:
+                  type: string
+                  example: "sua_senha"
+                client_id:
+                  type: string
+                  example: "seu_client_id"
+                client_secret:
+                  type: string
+                  example: "seu_client_secret"
       responses:
         '200':
           description: Token gerado com sucesso.
@@ -42,9 +57,15 @@ paths:
               schema:
                 type: object
                 properties:
-                  access_token: { type: string, description: "Token JWT" }
-                  token_type: { type: string, example: "Bearer" }
-                  expires_in: { type: integer, description: "Tempo de expiração em segundos" }
+                  access_token:
+                    type: string
+                    description: Token JWT
+                  token_type:
+                    type: string
+                    example: "Bearer"
+                  expires_in:
+                    type: integer
+                    description: Tempo de expiração em segundos
         '400':
           description: Credenciais inválidas ou campos faltando.
           content:
@@ -52,34 +73,63 @@ paths:
               schema:
                 type: object
                 properties:
-                  error: { type: boolean }
-                  messages: { type: object }
+                  error:
+                    type: boolean
+                  messages:
+                    type: object
 
   /associados/relatorios:
     get:
       tags: [Associados]
       summary: Relatório de associados por período
+      description: |
+        Endpoint protegido.
+
+        Headers obrigatórios:
+        - `Authorization: Bearer <token>`
+        - `client-secret: <seu_client_secret>`
+
+        Exemplo de chamada:
+        `GET /associados/relatorios?ano=2023&mes=2`
       security:
         - bearerAuth: []
       parameters:
+        - name: client-secret
+          in: header
+          required: true
+          description: Client secret necessário para autenticação da aplicação.
+          schema:
+            type: string
+          example: "seu_client_secret"
         - name: ano
           in: query
           required: true
-          schema: { type: integer, minimum: 1000, maximum: 9999 }
+          description: Ano de referência do relatório.
+          schema:
+            type: integer
+            minimum: 1000
+            maximum: 9999
           example: 2025
         - name: mes
           in: query
           required: true
-          schema: { type: integer, minimum: 1, maximum: 12 }
+          description: Mês de referência do relatório.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
           example: 2
         - name: limit
           in: query
           required: false
-          description: "Paginação: inicio,quantidade (ex: 0,10)"
-          schema: { type: string, pattern: '^\d+,\d+$', example: "0,10" }
+          description: "Paginação no formato `inicio,quantidade` (exemplo: `0,10`)."
+          schema:
+            type: string
+            pattern: '^\d+,\d+$'
+          example: "0,10"
       responses:
         '200':
-          description: Lista de associados
+          description: Lista de associados.
           content:
             application/json:
               schema:
@@ -87,78 +137,140 @@ paths:
                 items:
                   type: object
                   properties:
-                    uf_siga: { type: string }
-                    unidade_nucleo: { type: string }
-                    cnpj: { type: string }
-                    cidade: { type: string }
-                    uf: { type: string }
-                    categoria_associado: { type: string }
-        '204': { description: Nenhum registro encontrado }
-        '401': { description: Token inválido ou ausente }
+                    uf_siga:
+                      type: string
+                    unidade_nucleo:
+                      type: string
+                    cnpj:
+                      type: string
+                    cidade:
+                      type: string
+                    uf:
+                      type: string
+                    categoria_associado:
+                      type: string
+        '204':
+          description: Nenhum registro encontrado.
+        '401':
+          description: Token inválido, ausente ou client-secret não informado.
 
   /associados/relatorios/municipios:
     get:
       tags: [Associados]
       summary: Municípios com associados ativos
+      description: |
+        Endpoint protegido.
+
+        Headers obrigatórios:
+        - `Authorization: Bearer <token>`
+        - `client-secret: <seu_client_secret>`
       security:
         - bearerAuth: []
       parameters:
+        - name: client-secret
+          in: header
+          required: true
+          description: Client secret necessário para autenticação da aplicação.
+          schema:
+            type: string
+          example: "seu_client_secret"
         - name: ano
           in: query
           required: true
-          schema: { type: integer }
+          schema:
+            type: integer
+          example: 2025
         - name: mes
           in: query
           required: true
-          schema: { type: integer }
+          schema:
+            type: integer
+          example: 2
         - name: minAssociados
           in: query
           required: false
-          description: "Mínimo de associados por município (padrão=1)"
-          schema: { type: integer, minimum: 0, default: 1 }
+          description: Mínimo de associados por município. Padrão = 1.
+          schema:
+            type: integer
+            minimum: 0
+            default: 1
+          example: 1
         - name: limit
           in: query
           required: false
-          schema: { type: string, pattern: '^\d+,\d+$' }
+          description: "Paginação no formato `inicio,quantidade` (exemplo: `0,10`)."
+          schema:
+            type: string
+            pattern: '^\d+,\d+$'
+          example: "0,10"
       responses:
         '200':
-          description: Lista de municípios
+          description: Lista de municípios.
           content:
             application/json:
               schema:
                 type: array
                 items:
                   type: object
-                  required: [uf, total_cnpj, municipio]
+                  required:
+                    - uf
+                    - total_cnpj
+                    - municipio
                   properties:
-                    uf: { type: string }
-                    total_cnpj: { type: integer }
-                    municipio: { type: string }
-        '204': { description: Nenhum registro encontrado }
-        '401': { description: Token inválido ou ausente }
+                    uf:
+                      type: string
+                    total_cnpj:
+                      type: integer
+                    municipio:
+                      type: string
+        '204':
+          description: Nenhum registro encontrado.
+        '401':
+          description: Token inválido, ausente ou client-secret não informado.
 
   /associados/relatorios/historico/movimentacoes:
     get:
       tags: [Associados]
       summary: Histórico de movimentações (filiações, desfiliações)
+      description: |
+        Endpoint protegido.
+
+        Headers obrigatórios:
+        - `Authorization: Bearer <token>`
+        - `client-secret: <seu_client_secret>`
       security:
         - bearerAuth: []
       parameters:
+        - name: client-secret
+          in: header
+          required: true
+          description: Client secret necessário para autenticação da aplicação.
+          schema:
+            type: string
+          example: "seu_client_secret"
         - name: ano
           in: query
           required: true
-          schema: { type: integer }
+          schema:
+            type: integer
+          example: 2025
         - name: mes
           in: query
           required: true
-          schema: { type: integer }
+          schema:
+            type: integer
+          example: 2
         - name: limit
           in: query
           required: false
-          schema: { type: string, pattern: '^\d+,\d+$' }
+          description: "Paginação no formato `inicio,quantidade` (exemplo: `0,10`)."
+          schema:
+            type: string
+            pattern: '^\d+,\d+$'
+          example: "0,10"
       responses:
         '200':
-          description: Lista de movimentações
+          description: Lista de movimentações.
           content:
             application/json:
               schema:
@@ -166,16 +278,33 @@ paths:
                 items:
                   type: object
                   properties:
-                    uf_siga: { type: string }
-                    unidade_nucleo: { type: string }
-                    cnpj: { type: string }
-                    dt_movimentacao: { type: string, format: date }
-                    mes_ano: { type: string }
-                    movimentacao_tipo: { type: string, enum: ["Filiação", "Refiliação", "Desfiliação"] }
-                    motivo_desfiliacao: { type: string, nullable: true }
-                    motivo_filiacao: { type: string, nullable: true }
-        '204': { description: Nenhum registro encontrado }
-        '401': { description: Token inválido ou ausente }
+                    uf_siga:
+                      type: string
+                    unidade_nucleo:
+                      type: string
+                    cnpj:
+                      type: string
+                    dt_movimentacao:
+                      type: string
+                      format: date
+                    mes_ano:
+                      type: string
+                    movimentacao_tipo:
+                      type: string
+                      enum:
+                        - Filiação
+                        - Refiliação
+                        - Desfiliação
+                    motivo_desfiliacao:
+                      type: string
+                      nullable: true
+                    motivo_filiacao:
+                      type: string
+                      nullable: true
+        '204':
+          description: Nenhum registro encontrado.
+        '401':
+          description: Token inválido, ausente ou client-secret não informado.
 
 components:
   securitySchemes:
