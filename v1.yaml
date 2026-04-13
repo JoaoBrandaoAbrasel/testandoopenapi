@@ -2,13 +2,12 @@ openapi: 3.0.3
 info:
   title: API de Integração Painel Abrametas
   version: "7.1.0"
-  description: API interna para disponibilização de dados consolidados do painel Abrametas S/R/N.
+  description: |
+    API interna para disponibilização de dados consolidados do painel Abrametas S/R/N.
 
-servers:
-  - url: https://s1.assosys.com/siga/testes/api/v7.1.0
-    description: Ambiente de testes
-  - url: https://siga.abrasel.com.br/api/v7.1.0
-    description: Ambiente de produção
+    Ambientes:
+    - Testes: `https://s1.assosys.com/siga/testes/api/v7.1.0`
+    - Produção: `https://siga.abrasel.com.br/api/v7.1.0`
 
 tags:
   - name: Autenticação
@@ -85,22 +84,18 @@ paths:
       description: |
         Endpoint protegido.
 
-        Headers obrigatórios:
+        Para consumir esta rota, envie os headers abaixo:
         - `Authorization: Bearer <token>`
         - `client-secret: <seu_client_secret>`
 
         Exemplo de chamada:
         `GET /associados/relatorios?ano=2023&mes=2`
-      security:
-        - bearerAuth: []
+
+        Exemplo de headers:
+        - `accept: application/json`
+        - `Authorization: Bearer <token>`
+        - `client-secret: <seu_client_secret>`
       parameters:
-        - name: client-secret
-          in: header
-          required: true
-          description: Client secret necessário para autenticação da aplicação.
-          schema:
-            type: string
-          example: "seu_client_secret"
         - name: ano
           in: query
           required: true
@@ -161,19 +156,15 @@ paths:
       description: |
         Endpoint protegido.
 
-        Headers obrigatórios:
+        Para consumir esta rota, envie os headers abaixo:
         - `Authorization: Bearer <token>`
         - `client-secret: <seu_client_secret>`
-      security:
-        - bearerAuth: []
+
+        Exemplo de headers:
+        - `accept: application/json`
+        - `Authorization: Bearer <token>`
+        - `client-secret: <seu_client_secret>`
       parameters:
-        - name: client-secret
-          in: header
-          required: true
-          description: Client secret necessário para autenticação da aplicação.
-          schema:
-            type: string
-          example: "seu_client_secret"
         - name: ano
           in: query
           required: true
@@ -235,19 +226,15 @@ paths:
       description: |
         Endpoint protegido.
 
-        Headers obrigatórios:
+        Para consumir esta rota, envie os headers abaixo:
         - `Authorization: Bearer <token>`
         - `client-secret: <seu_client_secret>`
-      security:
-        - bearerAuth: []
+
+        Exemplo de headers:
+        - `accept: application/json`
+        - `Authorization: Bearer <token>`
+        - `client-secret: <seu_client_secret>`
       parameters:
-        - name: client-secret
-          in: header
-          required: true
-          description: Client secret necessário para autenticação da aplicação.
-          schema:
-            type: string
-          example: "seu_client_secret"
         - name: ano
           in: query
           required: true
@@ -305,11 +292,3 @@ paths:
           description: Nenhum registro encontrado.
         '401':
           description: Token inválido, ausente ou client-secret não informado.
-
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Insira o token no formato `Bearer <token>`
