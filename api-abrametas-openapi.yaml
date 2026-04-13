@@ -1,0 +1,545 @@
+openapi: 3.0.3
+info:
+  title: API de Integração Painel Abrametas
+  version: "7.1.0"
+  summary: API interna para disponibilização de dados consolidados do painel Abrametas S/R/N.
+  description: |
+    API interna destinada ao time de dados para automatizar a estrutura de dados utilizada
+    no painel do Abrametas S/R/N.
+
+    A API é baseada em duas origens do SIGA:
+      - Lista 51: Relatório de Associados (Histórico Saldo)
+      - Lista 49: Relatório de Associados Histórico (Entradas/Saídas)
+
+    Esta especificação foi elaborada com base na documentação funcional versão 7.0,
+    datada de 09/03/2026. Alguns comportamentos técnicos não descritos no documento
+    original foram modelados como premissas de contrato OpenAPI, especialmente:
+      - formato padrão de erros;
+      - ausência de autenticação documentada;
+      - exemplos estruturados de resposta.
+
+    Atualização dos dados:
+      - os dados consolidados são gerados no primeiro dia útil de cada mês;
+      - a API deve permitir a consulta do período corrente consolidado e também de meses anteriores.
+  contact:
+    name: Time responsável pela integração Abrametas
+  x-document-source:
+    document: "Documentação API - integração painel Abrametas.pdf"
+    version: "7.0"
+    date: "2026-03-09"
+
+servers:
+  - url: https://s1.assosys.com.br/siga/testes/api/v7.1.0
+    description: Ambiente de testes
+  - url: https://siga.abrasel.com.br/api/v7.1.0
+    description: Ambiente de produção
+
+tags:
+  - name: Relatórios
+    description: Endpoints derivados da Lista 51 do SIGA.
+  - name: Histórico
+    description: Endpoints derivados da Lista 49 do SIGA.
+
+paths:
+  /associados/relatorios:
+    get:
+      tags:
+        - Relatórios
+      operationId: listarRelatorioAssociados
+      summary: Listar relatório de associados (Histórico Saldo)
+      description: |
+        Retorna os campos necessários para o Relatório de Associados (Histórico Saldo),
+        com base na Lista 51 do SIGA.
+
+        Regra para o campo `unidade_nucleo`:
+          - se a coluna Núcleo estiver em branco, considerar o valor da Unidade;
+          - se a coluna Núcleo estiver preenchida, considerar o valor do Núcleo.
+      parameters:
+        - $ref: '#/components/parameters/Ano'
+        - $ref: '#/components/parameters/Mes'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Lista de associados retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelatorioAssociadosResponse'
+              examples:
+                exemplo:
+                  summary: Exemplo de retorno de relatório de associados
+                  value:
+                    ano: 2025
+                    mes: 11
+                    total_registros: 2
+                    limit: "0,2"
+                    data:
+                      - uf_siga: MG
+                        unidade_nucleo: Belo Horizonte
+                        cnpj: "12.345.678/0001-90"
+                        cidade: Belo Horizonte
+                        uf: MG
+                        categoria_associado: ESTATUTÁRIO
+                      - uf_siga: SP
+                        unidade_nucleo: Campinas
+                        cnpj: "98.765.432/0001-10"
+                        cidade: Campinas
+                        uf: SP
+                        categoria_associado: ESTATUTÁRIO
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /associados/relatorios/municipios:
+    get:
+      tags:
+        - Relatórios
+      operationId: listarRelatorioMunicipios
+      summary: Listar relatório de associados por municípios
+      description: |
+        Retorna as informações necessárias para o Relatório de Associados por municípios,
+        com base na Lista 51 do SIGA.
+
+        Regras de uso dos dados:
+          - A lista disponibiliza CNPJs por cidade.
+          - Para obter o total de CNPJs por UF, deve-se selecionar o estado desejado
+            e somar a quantidade de registros por cidade.
+          - Para apurar quantidade de municípios com associados por UF, deve-se contar
+            os municípios retornados para o UF escolhido.
+          - Quando `minAssociados` não for informado, assume-se o valor 1.
+          - Para contagem de municípios com 3 ou mais associados, informar `minAssociados=3`.
+          - O cálculo de robustez é feito pela divisão entre a contagem de municípios
+            com 3 ou mais associados e o número total de municípios de 4 meses anteriores,
+            exceto em dezembro, quando a base de comparação é o próprio mês de dezembro.
+      parameters:
+        - $ref: '#/components/parameters/Ano'
+        - $ref: '#/components/parameters/Mes'
+        - $ref: '#/components/parameters/MinAssociados'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Lista de municípios retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelatorioMunicipiosResponse'
+              examples:
+                exemplo:
+                  summary: Exemplo de retorno de municípios
+                  value:
+                    ano: 2025
+                    mes: 11
+                    minAssociados: 3
+                    total_registros: 2
+                    limit: "0,2"
+                    data:
+                      - uf: MG
+                        total_cnpj: 5
+                        municipio: Belo Horizonte
+                      - uf: MG
+                        total_cnpj: 3
+                        municipio: Contagem
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /associados/relatorios/historico/movimentacoes:
+    get:
+      tags:
+        - Histórico
+      operationId: listarHistoricoMovimentacoes
+      summary: Listar histórico de entradas e saídas de associados
+      description: |
+        Retorna os campos necessários para o Relatório de Associados Histórico
+        (Entradas/Saídas), com base na Lista 49 do SIGA.
+
+        Regras:
+          - `unidade_nucleo` deve considerar Núcleo quando preenchido;
+            caso contrário, deve considerar Unidade.
+          - Devem ser removidas as movimentações de transferência.
+          - Devem ser mantidas apenas:
+              - Filiação;
+              - Refiliação;
+              - Desfiliação.
+          - Para entrada, considerar Filiação e Refiliação.
+          - Para saída, considerar Desfiliação.
+      parameters:
+        - $ref: '#/components/parameters/Ano'
+        - $ref: '#/components/parameters/Mes'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Lista de movimentações retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoricoMovimentacoesResponse'
+              examples:
+                exemplo:
+                  summary: Exemplo de retorno de histórico de movimentações
+                  value:
+                    ano: 2025
+                    mes: 11
+                    total_registros: 2
+                    limit: "0,2"
+                    data:
+                      - uf: MG
+                        unidade_nucleo: Belo Horizonte
+                        dt_movimentacao: "2025-11-03"
+                        mes_ano: "11/2025"
+                        movimentacao_tipo: Filiação
+                        motivo_desfiliacao: null
+                        motivo_filiacao: Novo associado
+                      - uf: MG
+                        unidade_nucleo: Uberlândia
+                        dt_movimentacao: "2025-11-08"
+                        mes_ano: "11/2025"
+                        movimentacao_tipo: Desfiliação
+                        motivo_desfiliacao: Inadimplência
+                        motivo_filiacao: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  parameters:
+    Ano:
+      name: ano
+      in: query
+      required: true
+      description: Ano de referência da consulta, no formato de quatro dígitos.
+      schema:
+        type: integer
+        minimum: 1900
+        maximum: 2999
+        example: 2025
+
+    Mes:
+      name: mes
+      in: query
+      required: true
+      description: |
+        Mês de referência da consulta. A documentação recomenda o envio com dois dígitos.
+      schema:
+        oneOf:
+          - type: string
+            pattern: '^(0[1-9]|1[0-2])$'
+            example: "02"
+          - type: integer
+            minimum: 1
+            maximum: 12
+            example: 2
+
+    MinAssociados:
+      name: minAssociados
+      in: query
+      required: false
+      description: |
+        Quantidade mínima de associados por município. Municípios com total inferior ao valor
+        informado serão desconsiderados. Quando omitido, assume-se o valor 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+        example: 3
+
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: |
+        Limita a quantidade de registros retornados, no formato `indiceInicial,quantidade`.
+        Exemplo: `0,3` indica que a consulta começará no índice 0 e retornará 3 registros.
+      schema:
+        type: string
+        pattern: '^\d+,\d+$'
+        example: "0,3"
+
+  responses:
+    BadRequest:
+      description: Requisição inválida.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            exemplo:
+              value:
+                error: bad_request
+                message: Parâmetros da requisição inválidos.
+                details: []
+
+    ValidationError:
+      description: Erro de validação dos parâmetros informados.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            exemplo:
+              value:
+                error: validation_error
+                message: Falha na validação dos parâmetros da consulta.
+                details:
+                  - field: ano
+                    message: O campo ano é obrigatório e deve possuir quatro dígitos.
+                  - field: mes
+                    message: O campo mes deve estar entre 01 e 12.
+
+    InternalServerError:
+      description: Erro interno no processamento da consulta.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            exemplo:
+              value:
+                error: internal_server_error
+                message: Ocorreu um erro interno ao processar a solicitação.
+                details: []
+
+  schemas:
+    RelatorioAssociadoItem:
+      type: object
+      additionalProperties: false
+      required:
+        - uf_siga
+        - unidade_nucleo
+        - cnpj
+        - cidade
+        - uf
+        - categoria_associado
+      properties:
+        uf_siga:
+          type: string
+          description: UF vinculada ao SIGA/origem do registro.
+          example: MG
+        unidade_nucleo:
+          type: string
+          description: |
+            Valor consolidado entre Unidade e Núcleo.
+            Quando Núcleo existir, ele deve prevalecer; caso contrário, utilizar Unidade.
+          example: Belo Horizonte
+        cnpj:
+          type: string
+          description: CNPJ do associado.
+          example: "12.345.678/0001-90"
+        cidade:
+          type: string
+          description: Cidade do associado.
+          example: Belo Horizonte
+        uf:
+          type: string
+          description: Unidade federativa do associado.
+          example: MG
+        categoria_associado:
+          type: string
+          description: Categoria do associado retornada pela base.
+          example: ESTATUTÁRIO
+
+    RelatorioAssociadosResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - ano
+        - mes
+        - total_registros
+        - data
+      properties:
+        ano:
+          type: integer
+          example: 2025
+        mes:
+          oneOf:
+            - type: string
+              example: "11"
+            - type: integer
+              example: 11
+        total_registros:
+          type: integer
+          description: Quantidade de registros presentes na resposta.
+          example: 2
+        limit:
+          type: string
+          nullable: true
+          description: Valor do parâmetro de limitação aplicado à consulta, quando informado.
+          example: "0,2"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatorioAssociadoItem'
+
+    RelatorioMunicipioItem:
+      type: object
+      additionalProperties: false
+      required:
+        - uf
+        - total_cnpj
+        - municipio
+      properties:
+        uf:
+          type: string
+          description: Unidade federativa do município.
+          example: MG
+        total_cnpj:
+          type: integer
+          description: Quantidade de CNPJs associados no município retornado.
+          example: 5
+        municipio:
+          type: string
+          description: Nome do município.
+          example: Belo Horizonte
+
+    RelatorioMunicipiosResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - ano
+        - mes
+        - minAssociados
+        - total_registros
+        - data
+      properties:
+        ano:
+          type: integer
+          example: 2025
+        mes:
+          oneOf:
+            - type: string
+              example: "11"
+            - type: integer
+              example: 11
+        minAssociados:
+          type: integer
+          description: Valor mínimo de associados utilizado na filtragem.
+          default: 1
+          example: 3
+        total_registros:
+          type: integer
+          example: 2
+        limit:
+          type: string
+          nullable: true
+          example: "0,2"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatorioMunicipioItem'
+
+    HistoricoMovimentacaoItem:
+      type: object
+      additionalProperties: false
+      required:
+        - uf
+        - unidade_nucleo
+        - dt_movimentacao
+        - mes_ano
+        - movimentacao_tipo
+      properties:
+        uf:
+          type: string
+          description: Unidade federativa relacionada à movimentação.
+          example: MG
+        unidade_nucleo:
+          type: string
+          description: |
+            Valor consolidado entre Unidade e Núcleo.
+            Quando Núcleo existir, ele deve prevalecer; caso contrário, utilizar Unidade.
+          example: Belo Horizonte
+        dt_movimentacao:
+          type: string
+          format: date
+          description: Data da movimentação.
+          example: "2025-11-03"
+        mes_ano:
+          type: string
+          description: Competência da movimentação no formato MM/AAAA.
+          example: "11/2025"
+        movimentacao_tipo:
+          type: string
+          description: Tipo da movimentação retornada, excluindo transferências.
+          enum:
+            - Filiação
+            - Refiliação
+            - Desfiliação
+          example: Filiação
+        motivo_desfiliacao:
+          type: string
+          nullable: true
+          description: Motivo da desfiliação, quando aplicável.
+          example: Inadimplência
+        motivo_filiacao:
+          type: string
+          nullable: true
+          description: Motivo da filiação ou refiliação, quando aplicável.
+          example: Novo associado
+
+    HistoricoMovimentacoesResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - ano
+        - mes
+        - total_registros
+        - data
+      properties:
+        ano:
+          type: integer
+          example: 2025
+        mes:
+          oneOf:
+            - type: string
+              example: "11"
+            - type: integer
+              example: 11
+        total_registros:
+          type: integer
+          example: 2
+        limit:
+          type: string
+          nullable: true
+          example: "0,2"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoricoMovimentacaoItem'
+
+    ErrorDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+          example: mes
+        message:
+          type: string
+          example: O campo mes deve estar entre 01 e 12.
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - message
+        - details
+      properties:
+        error:
+          type: string
+          example: validation_error
+        message:
+          type: string
+          example: Falha na validação dos parâmetros da consulta.
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
