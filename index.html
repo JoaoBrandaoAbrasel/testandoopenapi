@@ -3,44 +3,383 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Documentação da API</title>
-
-  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
+  <title>Laboratório de Eventos</title>
   <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --brand: #0f766e;
+      --brand-strong: #115e59;
+      --border: #d1d5db;
+      --shadow: 0 10px 24px rgba(31, 41, 55, 0.08);
+    }
     body {
       margin: 0;
-      background: #f7f7f7;
-      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at 10% 10%, #eefaf8, var(--bg));
+      color: var(--ink);
+      font-family: "Segoe UI", Tahoma, sans-serif;
     }
     .topbar {
-      background: #1f2937;
+      background: linear-gradient(120deg, #0f766e, #155e75);
       color: white;
       padding: 14px 20px;
       font-size: 18px;
       font-weight: bold;
     }
+    .layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 14px;
+      padding: 14px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card-title {
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+    }
+    .card-content {
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 0;
+    }
+    .row {
+      display: grid;
+      gap: 8px;
+    }
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    label {
+      display: grid;
+      gap: 4px;
+      font-size: 13px;
+      color: #374151;
+    }
+    input,
+    select,
+    button {
+      font: inherit;
+    }
+    input,
+    select {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: white;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 9px 12px;
+      cursor: pointer;
+      background: var(--brand);
+      color: white;
+      font-weight: 600;
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+    button:hover {
+      background: var(--brand-strong);
+      transform: translateY(-1px);
+    }
+    .btn-alt {
+      background: #334155;
+    }
+    .btn-alt:hover {
+      background: #1f2937;
+    }
+    #event-log {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 260px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fbfdff;
+    }
+    #event-log li {
+      padding: 8px 10px;
+      font-size: 12px;
+      border-bottom: 1px solid #eef2f7;
+      font-family: Consolas, monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    #event-log li:last-child {
+      border-bottom: none;
+    }
+    .swagger-panel {
+      min-width: 0;
+    }
+    .panel-grid {
+      display: grid;
+      gap: 10px;
+    }
+    .mini-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      background: #fbfdff;
+    }
+    .mini-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+    .mini-list {
+      margin: 0;
+      padding-left: 18px;
+      color: #334155;
+      font-size: 13px;
+      display: grid;
+      gap: 4px;
+    }
+    .event-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .event-tags span {
+      font-size: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .code-box {
+      margin: 0;
+      padding: 10px;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.45;
+      font-family: Consolas, monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="topbar">Documentação da API</div>
-  <div id="swagger-ui"></div>
+  <div class="topbar">Laboratório de Eventos</div>
+  <div class="layout">
+    <section class="card">
+      <div class="card-title">Laboratório de Eventos</div>
+      <div class="card-content">
+        <p class="muted">Base pronta para você conectar no PostHog depois. Por enquanto, os eventos são exibidos no painel e no console.</p>
 
-  <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
-  <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
+        <div class="row">
+          <button id="btn-cta">Evento de clique (CTA)</button>
+          <button id="btn-error" class="btn-alt">Evento de erro simulado</button>
+        </div>
+
+        <form id="signup-form" class="row">
+          <div class="row-2">
+            <label>
+              Nome
+              <input id="input-name" name="name" placeholder="Maria" required />
+            </label>
+            <label>
+              Tipo
+              <select id="input-plan" name="plan">
+                <option value="free">Free</option>
+                <option value="pro">Pro</option>
+                <option value="enterprise">Enterprise</option>
+              </select>
+            </label>
+          </div>
+          <button type="submit">Evento de formulário (submit)</button>
+        </form>
+
+        <label>
+          Feature flag (simulação)
+          <select id="feature-toggle">
+            <option value="off">Desligada</option>
+            <option value="on">Ligada</option>
+          </select>
+        </label>
+
+        <button id="btn-api-tryout" class="btn-alt">Evento de tentativa de endpoint</button>
+
+        <ul id="event-log" aria-live="polite"></ul>
+      </div>
+    </section>
+
+    <section class="card swagger-panel">
+      <div class="card-title">Painel de Experimentos</div>
+      <div class="card-content">
+        <p class="muted">Aqui fica o espaco que substitui os YAMLs: guia rapido para testar eventos e validar payloads.</p>
+
+        <div class="panel-grid">
+          <article class="mini-card">
+            <h3 class="mini-title">Checklist rapido</h3>
+            <ul class="mini-list">
+              <li>Disparar 3 a 5 eventos pelo painel da esquerda</li>
+              <li>Conferir o payload no log em tempo real</li>
+              <li>Confirmar padrao de nomes dos eventos</li>
+              <li>Depois, plugar o client PostHog em trackEvent</li>
+            </ul>
+          </article>
+
+          <article class="mini-card">
+            <h3 class="mini-title">Eventos sugeridos</h3>
+            <div class="event-tags">
+              <span>page_viewed</span>
+              <span>cta_clicked</span>
+              <span>signup_form_submitted</span>
+              <span>feature_flag_changed</span>
+              <span>ui_error_occurred</span>
+              <span>session_ended</span>
+            </div>
+          </article>
+
+          <article class="mini-card">
+            <h3 class="mini-title">Exemplo de payload</h3>
+            <pre class="code-box">{
+  "event": "cta_clicked",
+  "timestamp": "2026-07-13T10:20:33.000Z",
+  "url": "/",
+  "component": "event_lab",
+  "label": "Evento de clique (CTA)"
+}</pre>
+          </article>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <script>
-    window.onload = () => {
-      SwaggerUIBundle({
-        url: "./api-abrametas-openapi.yaml",
-        dom_id: "#swagger-ui",
-        deepLinking: true,
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        layout: "BaseLayout"
+    const eventLog = [];
+    const sessionStartedAt = performance.now();
+
+    function trackEvent(eventName, properties = {}) {
+      const payload = {
+        event: eventName,
+        timestamp: new Date().toISOString(),
+        url: window.location.pathname,
+        ...properties
+      };
+
+      eventLog.push(payload);
+      console.log("[EVENT]", payload);
+      renderEventLog();
+    }
+
+    function renderEventLog() {
+      const container = document.getElementById("event-log");
+      container.innerHTML = "";
+
+      const recentEvents = eventLog.slice(-15).reverse();
+      recentEvents.forEach((eventItem) => {
+        const li = document.createElement("li");
+        li.textContent = JSON.stringify(eventItem, null, 2);
+        container.appendChild(li);
       });
+    }
+
+    function bindEventExamples() {
+      document.getElementById("btn-cta").addEventListener("click", () => {
+        trackEvent("cta_clicked", {
+          component: "event_lab",
+          label: "Evento de clique (CTA)",
+          screen: "docs_home"
+        });
+      });
+
+      document.getElementById("btn-error").addEventListener("click", () => {
+        try {
+          throw new Error("Falha de validacao simulada");
+        } catch (error) {
+          trackEvent("ui_error_occurred", {
+            severity: "warning",
+            message: error.message,
+            source: "manual_simulation"
+          });
+        }
+      });
+
+      document.getElementById("signup-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const name = document.getElementById("input-name").value.trim();
+        const plan = document.getElementById("input-plan").value;
+
+        trackEvent("signup_form_submitted", {
+          has_name: name.length > 0,
+          plan,
+          origin: "event_lab"
+        });
+
+        event.target.reset();
+      });
+
+      document.getElementById("feature-toggle").addEventListener("change", (event) => {
+        trackEvent("feature_flag_changed", {
+          feature_key: "new_swagger_layout",
+          enabled: event.target.value === "on"
+        });
+      });
+
+      document.getElementById("btn-api-tryout").addEventListener("click", () => {
+        trackEvent("api_tryout_started", {
+          endpoint: "/associados/relatorios",
+          method: "GET",
+          source: "button_simulation"
+        });
+      });
+
+      window.addEventListener("beforeunload", () => {
+        const sessionDurationSeconds = Math.round((performance.now() - sessionStartedAt) / 1000);
+
+        trackEvent("session_ended", {
+          duration_seconds: sessionDurationSeconds,
+          total_events: eventLog.length
+        });
+      });
+    }
+
+    window.onload = () => {
+      trackEvent("page_viewed", {
+        page: "event_lab",
+        referrer: document.referrer || "direct"
+      });
+
+      bindEventExamples();
     };
+
+
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Fi Di init Ji Xi Tr Ki tn Zi capture calculateEventProperties ln register register_once register_for_session unregister unregister_for_session dn getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync cn identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty un sn createPersonProfile setInternalOrTestUser hn Wi pn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing rn debug Er it getPageViewId captureTraceFeedback captureTraceMetric Ui".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_vwknUqtFrTfQYnENab9nghsxpx92QFRGbmjrxUnLt8so', {
+        api_host: 'https://us.i.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+    })
+
   </script>
+  <script src="./experimentos.js"></script>
 </body>
 </html>
